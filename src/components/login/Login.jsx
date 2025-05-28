@@ -1,12 +1,22 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { loginWithEmail } from "../../firebase/auth";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../redux/slices/auth/authSlice";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+
+const firebaseErrorMessages = {
+  "auth/invalid-credential": "Invalid email or password.",
+  "auth/user-not-found": "No user found with this email.",
+  "auth/wrong-password": "Incorrect password.",
+  "auth/too-many-requests": "Too many attempts. Try again later.",
+};
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -17,43 +27,76 @@ const Login = () => {
     try {
       const user = await loginWithEmail(email, password);
       dispatch(loginSuccess(user));
+      toast.success("Login successfully!");
+
       navigate("/home");
     } catch (err) {
-      setError(err.message);
+      const errorCode = err.code || "auth/unknown";
+      setError(
+        firebaseErrorMessages[errorCode] || "Login failed. Please try again."
+      );
     }
   };
+
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200">
+      <div>
+        <Toaster />
+      </div>
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
+          Login to your account
+        </h2>
+
         <form onSubmit={handleLogin}>
+          <label className="block mb-2 font-medium text-gray-700">Email</label>
           <input
             type="email"
-            placeholder="Email"
-            className="w-full p-2 mb-4 border rounded"
+            placeholder="Enter your email"
+            className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-2 mb-4 border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error && <p className="text-red-500 mb-2">{error}</p>}
+
+          <label className="block mb-2 font-medium text-gray-700">
+            Password
+          </label>
+          <div className="relative mb-5">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-3 flex items-center text-sm text-gray-600 hover:text-blue-600 cursor-pointer"
+              tabIndex={-1}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {error && <p className="text-red-500 mt-2 mb-4 text-sm">{error}</p>}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300 cursor-pointer"
           >
             Login
           </button>
         </form>
-        <p className="mt-4 text-center">
+
+        <p className="mt-6 text-center text-gray-600 text-sm">
           Don’t have an account?{" "}
-          <Link to="/signup" className="text-blue-600">
+          <Link
+            to="/signup"
+            className="text-blue-600 font-medium hover:underline"
+          >
             Sign up
           </Link>
         </p>

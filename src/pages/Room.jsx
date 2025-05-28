@@ -6,6 +6,7 @@ import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { onSnapshot } from "firebase/firestore";
 import { Dialog, DialogTitle, DialogPanel } from "@headlessui/react";
+import { MagnifyingGlass } from "react-loader-spinner";
 
 const appId = import.meta.env.VITE_AGORA_APP_ID;
 
@@ -29,6 +30,7 @@ const Room = () => {
   const [muted, setMuted] = useState(false);
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [participants, setParticipants] = useState({});
+  const [loading, setLoading] = useState(true);
   console.log("participants==", participants, remoteUsers);
   const fetchParticipants = async () => {
     const snapshot = await getDocs(
@@ -41,8 +43,11 @@ const Room = () => {
     setParticipants(usersMap);
   };
 
+  console.log("remoteUsers==", remoteUsers);
+
   useEffect(() => {
     const joinRoom = async () => {
+      setLoading(true);
       const uid = await client.join(appId, roomId, null, userJoiner.uid);
       setLocalUid(uid);
 
@@ -51,37 +56,62 @@ const Room = () => {
       await client.publish(audioTrack);
 
       const existingUsers = client.remoteUsers;
-      for (const user of existingUsers) {
-        if (user.hasAudio) {
-          await client.subscribe(user, "audio");
-          user.audioTrack?.play();
+      console.log("existingUsers==", existingUsers);
+      // for (const user of existingUsers) {
+      //   if (user.hasAudio) {
+      //     await client.subscribe(user, "audio");
+      //     user.audioTrack?.play();
+
+      //     setRemoteUsers((prev) => {
+      //       const exists = prev.some((u) => u.uid === user.uid);
+      //       if (!exists) {
+      //         return [...prev, { ...user, isSpeaking: false }];
+      //       }
+      //       return prev;
+      //     });
+      //   }
+      // }
+
+      // for (const user of existingUsers) {
+      //   await client.subscribe(user, "audio");
+
+      //   // Play if there's an audioTrack
+      //   if (user.audioTrack) {
+      //     user.audioTrack.play();
+      //   }
+
+      //   setRemoteUsers((prev) => {
+      //     const exists = prev.some((u) => u.uid === user.uid);
+      //     if (!exists) {
+      //       return [...prev, { ...user, isSpeaking: false }];
+      //     }
+      //     return prev;
+      //   });
+      // }
+
+      client.on("user-published", async (user, mediaType) => {
+        if (user.uid === uid) return;
+
+        try {
+          await client.subscribe(user, mediaType);
+          if (mediaType === "audio" && user.audioTrack) {
+            user.audioTrack.play();
+          }
 
           setRemoteUsers((prev) => {
             const exists = prev.some((u) => u.uid === user.uid);
             if (!exists) {
               return [...prev, { ...user, isSpeaking: false }];
+            } else {
+              return prev.map((u) =>
+                u.uid === user.uid ? { ...user, isSpeaking: false } : u
+              );
             }
-            return prev;
           });
+          fetchParticipants()
+        } catch (err) {
+          console.warn("Error subscribing on user-published:", err);
         }
-      }
-
-      client.on("user-published", async (user, mediaType) => {
-        if (user.uid === uid) return;
-
-        await client.subscribe(user, mediaType);
-        if (mediaType === "audio") {
-          user.audioTrack?.play();
-        }
-
-        setRemoteUsers((prev) => {
-          const exists = prev.some((u) => u.uid === user.uid);
-          if (!exists) {
-            return [...prev, { ...user, isSpeaking: false }];
-          }
-          return prev;
-        });
-        fetchParticipants();
       });
 
       client.on("user-unpublished", (user) => {
@@ -90,6 +120,28 @@ const Room = () => {
             u.uid === user.uid ? { ...u, isSpeaking: false } : u
           )
         );
+      });
+
+      client.on("user-joined", async (user) => {
+        console.log("User joined:", user.uid);
+
+        // Force subscribe to audio in case they were already published
+        try {
+          // await client.subscribe(user, "audio");
+          // if (user.audioTrack) {
+          //   user.audioTrack.play();
+          // }
+
+          setRemoteUsers((prev) => {
+            const exists = prev.some((u) => u.uid === user.uid);
+            if (!exists) {
+              return [...prev, { ...user, isSpeaking: false }];
+            }
+            return prev;
+          });
+        } catch (err) {
+          console.warn("Error subscribing on user-joined:", err);
+        }
       });
 
       client.on("user-left", async (user) => {
@@ -115,7 +167,9 @@ const Room = () => {
     };
     fetchParticipants();
     joinRoom();
-
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
     return () => {
       localAudioTrack?.close();
       client.leave();
@@ -129,7 +183,7 @@ const Room = () => {
     } else {
       await localAudioTrack.setEnabled(false);
     }
-    setMuted(!muted);
+    setMuted((prev) => !prev);
   };
 
   const leaveRoom = async () => {
@@ -250,33 +304,23 @@ const Room = () => {
             <span className="font-medium">{roomCreatorName}</span>
           </p>
         </div>
-
-        {/* Delete Button for Room Creator */}
-        {userJoiner.uid === roomCreatorId && (
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 transition cursor-pointer"
+            onClick={leaveRoom}
+            className="bg-gray-700 text-white px-4 py-2 rounded shadow hover:bg-gray-800 transition cursor-pointer"
           >
-            🗑️Delete Room
+            🚪 Leave Room
           </button>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-wrap gap-4">
-        <button
-          onClick={toggleMute}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition cursor-pointer"
-        >
-          {muted ? "Unmute" : "🔇Mute"}
-        </button>
-
-        <button
-          onClick={leaveRoom}
-          className="bg-gray-700 text-white px-4 py-2 rounded shadow hover:bg-gray-800 transition cursor-pointer"
-        >
-          🚪 Leave Room
-        </button>
+          {/* Delete Button for Room Creator */}
+          {userJoiner.uid === roomCreatorId && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 transition cursor-pointer"
+            >
+              🗑️Delete Room
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Participants */}
@@ -287,31 +331,57 @@ const Room = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {/* Local User */}
-          {localUid && (
-            <div
-              style={{
-                borderColor: muted ? "black" : isSpeaking ? "#00ff00" : "gray",
-                border: "2px solid",
-              }}
-              className="p-4 rounded-lg shadow bg-white"
-            >
-              <h4 className="text-lg font-medium text-gray-800">
-                {userJoiner?.name || "You"}{" "}
-                <span className="ml-2 text-xs text-blue-600">(You)</span>
-              </h4>
-              {/* <p className="text-sm text-gray-500">UID: {localUid}</p> */}
-              <p
-                className={`text-sm font-medium ${
-                  isSpeaking
-                    ? "text-green-600"
-                    : muted
-                    ? "text-gray-400"
-                    : "text-gray-700"
-                }`}
+          {loading ? (
+            <MagnifyingGlass
+              visible={true}
+              height="80"
+              width="80"
+              ariaLabel="magnifying-glass-loading"
+              wrapperStyle={{}}
+              wrapperClass="magnifying-glass-wrapper"
+              glassColor="#c0efff"
+              color="#e15b64"
+            />
+          ) : (
+            localUid && (
+              <div
+                style={{
+                  borderColor: muted
+                    ? "black"
+                    : isSpeaking
+                    ? "#00ff00"
+                    : "gray",
+                  border: "2px solid",
+                }}
+                className="p-4 rounded-lg shadow bg-white"
               >
-                {muted ? "Muted" : isSpeaking ? "Speaking" : "Silent"}
-              </p>
-            </div>
+                <h4 className="text-lg font-medium text-gray-800">
+                  {userJoiner?.name || "You"}{" "}
+                  <span className="ml-2 text-xs text-blue-600">(You)</span>
+                </h4>
+                {/* <p className="text-sm text-gray-500">UID: {localUid}</p> */}
+                <p
+                  className={`text-sm font-medium ${
+                    isSpeaking
+                      ? "text-green-600"
+                      : muted
+                      ? "text-gray-400"
+                      : "text-gray-700"
+                  }`}
+                >
+                  {muted ? "Muted" : isSpeaking ? "Speaking" : "Silent"}
+                </p>
+                {/* Controls */}
+                <div className="flex flex-wrap gap-4">
+                  <button
+                    onClick={toggleMute}
+                    className="mt-3 inline-flex items-center text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition cursor-pointer"
+                  >
+                    {muted ? "🔊Unmute" : "🔇Mute"}
+                  </button>
+                </div>
+              </div>
+            )
           )}
 
           {/* Remote Users */}
@@ -325,7 +395,7 @@ const Room = () => {
               className="p-4 rounded-lg shadow bg-white hover:shadow-md transition"
             >
               <h4 className="text-lg font-medium text-gray-800">
-                {participants[user.uid]?.name || `User ${user.uid}`}
+                {participants[user.uid]?.name}
               </h4>
               <p
                 className={`text-sm font-medium ${

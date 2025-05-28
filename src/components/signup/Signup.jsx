@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { registerWithEmail } from "../../firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 const Signup = () => {
   const [name, setName] = useState(""); // ✅ Add name state
@@ -24,7 +26,8 @@ const Signup = () => {
     }
 
     try {
-      await registerWithEmail(email, password,name);
+      await registerWithEmail(email, password, name);
+      toast.success('Account Created Successfully!')
       navigate("/");
     } catch (err) {
       setError(err.message);
@@ -33,6 +36,7 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div><Toaster/></div>
       <div className="bg-white shadow-md rounded-xl p-8 w-full max-w-md border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
           Create an Account

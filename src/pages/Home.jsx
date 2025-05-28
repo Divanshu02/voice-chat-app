@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../firebase/auth";
 import { logoutSuccess } from "../redux/slices/auth/authSlice";
 import { Dialog, DialogTitle, DialogPanel } from "@headlessui/react";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { MagnifyingGlass } from "react-loader-spinner";
 
 const Home = () => {
   const [rooms, setRooms] = useState([]);
@@ -14,13 +17,19 @@ const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   console.log("isUser::=", user);
 
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = subscribeToRooms(setRooms);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
     return () => unsubscribe();
   }, []);
+
+  console.log("loadingState==", loading);
 
   const handleCreateRoom = async (e) => {
     e.preventDefault();
@@ -46,6 +55,7 @@ const Home = () => {
     try {
       await logoutUser();
       dispatch(logoutSuccess());
+      toast.success("Logout Successfully");
       navigate("/"); // Back to login
     } catch (error) {
       console.error("Logout error:", error.message);
@@ -54,6 +64,9 @@ const Home = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 space-y-10 font-[Poppins] bg-gradient-to-br from-white via-blue-50 to-indigo-50 min-h-screen">
+      <div>
+        <Toaster />
+      </div>
       {/* Header */}
       <div className="flex justify-between items-center border-b border-gray-200 pb-6">
         <div>
@@ -136,7 +149,20 @@ const Home = () => {
         <h2 className="text-2xl font-semibold text-slate-800">
           Available Rooms
         </h2>
-        {rooms.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <MagnifyingGlass
+              visible={true}
+              height="80"
+              width="80"
+              ariaLabel="magnifying-glass-loading"
+              wrapperStyle={{}}
+              wrapperClass="magnifying-glass-wrapper"
+              glassColor="#c0efff"
+              color="#e15b64"
+            />
+          </div>
+        ) : rooms.length === 0 ? (
           <p className="text-gray-500 italic">
             No rooms available. Be the first to create one!
           </p>
