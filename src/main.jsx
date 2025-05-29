@@ -14,11 +14,13 @@ import { Provider } from "react-redux";
 import store from "./redux/store.js";
 import Room from "./pages/Room.jsx";
 import ProtectedRoute from "./components/protect-routes/ProtectedRoute.jsx";
+import NoPageFound from "./pages/NoPageFound.jsx";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route index element={<Login />} />
+      <Route path="*" element={<NoPageFound />} />
       <Route path="signup" element={<Signup />} />
 
       <Route

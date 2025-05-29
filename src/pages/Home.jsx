@@ -55,7 +55,7 @@ const Home = () => {
     try {
       await logoutUser();
       dispatch(logoutSuccess());
-      toast.success("Logout Successfully");
+      toast.success("LoggedOut Successfully");
       navigate("/"); // Back to login
     } catch (error) {
       console.error("Logout error:", error.message);
@@ -177,6 +177,7 @@ const Home = () => {
                   <p className="text-lg font-semibold text-indigo-700">
                     {room.roomName}
                   </p>
+
                   <p className="text-sm text-gray-500 mt-1">
                     Created by:{" "}
                     <span className="font-medium">{room.roomCreatorName}</span>

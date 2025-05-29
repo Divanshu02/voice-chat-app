@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { loginWithEmail } from "../../firebase/auth";
+import { loginWithEmail, loginWithGoogle } from "../../firebase/auth";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../redux/slices/auth/authSlice";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
+import { FcGoogle } from "react-icons/fc";
 
 const firebaseErrorMessages = {
   "auth/invalid-credential": "Invalid email or password.",
@@ -27,13 +28,29 @@ const Login = () => {
     try {
       const user = await loginWithEmail(email, password);
       dispatch(loginSuccess(user));
-      toast.success("Login successfully!");
+      toast.success("LoggedIn successfully!");
 
       navigate("/home");
     } catch (err) {
       const errorCode = err.code || "auth/unknown";
       setError(
         firebaseErrorMessages[errorCode] || "Login failed. Please try again."
+      );
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    try {
+      const user = await loginWithGoogle();
+      dispatch(loginSuccess(user));
+      toast.success("LoggedIn successfully!");
+      navigate("/home");
+    } catch (err) {
+      const errorCode = err.code || "auth/unknown";
+      setError(
+        firebaseErrorMessages[errorCode] ||
+          "Google login failed. Please try again."
       );
     }
   };
@@ -90,6 +107,20 @@ const Login = () => {
             Login
           </button>
         </form>
+
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="mx-4 text-gray-500">or</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 p-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition duration-300 cursor-pointer"
+        >
+          <FcGoogle className="text-xl" />
+          Continue with Google
+        </button>
 
         <p className="mt-6 text-center text-gray-600 text-sm">
           Don’t have an account?{" "}

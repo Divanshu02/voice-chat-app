@@ -31,7 +31,7 @@ const Room = () => {
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [participants, setParticipants] = useState({});
   const [loading, setLoading] = useState(true);
-  console.log("participants==", participants, remoteUsers);
+  console.log("participants==", participants, remoteUsers,userJoiner);
   const fetchParticipants = async () => {
     const snapshot = await getDocs(
       collection(db, `rooms/${roomId}/participants`)
@@ -57,20 +57,20 @@ const Room = () => {
 
       const existingUsers = client.remoteUsers;
       console.log("existingUsers==", existingUsers);
-      // for (const user of existingUsers) {
-      //   if (user.hasAudio) {
-      //     await client.subscribe(user, "audio");
-      //     user.audioTrack?.play();
+      for (const user of existingUsers) {
+        if (user.hasAudio) {
+          await client.subscribe(user, "audio");
+          user.audioTrack?.play();
 
-      //     setRemoteUsers((prev) => {
-      //       const exists = prev.some((u) => u.uid === user.uid);
-      //       if (!exists) {
-      //         return [...prev, { ...user, isSpeaking: false }];
-      //       }
-      //       return prev;
-      //     });
-      //   }
-      // }
+          setRemoteUsers((prev) => {
+            const exists = prev.some((u) => u.uid === user.uid);
+            if (!exists) {
+              return [...prev, { ...user, isSpeaking: false }];
+            }
+            return prev;
+          });
+        }
+      }
 
       // for (const user of existingUsers) {
       //   await client.subscribe(user, "audio");
@@ -139,6 +139,7 @@ const Room = () => {
             }
             return prev;
           });
+          fetchParticipants()
         } catch (err) {
           console.warn("Error subscribing on user-joined:", err);
         }

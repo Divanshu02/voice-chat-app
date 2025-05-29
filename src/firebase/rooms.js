@@ -59,3 +59,9 @@ export const fetchRoomParticipants = async (roomId) => {
   });
   return participants;
 };
+
+export const getRoomDetails = async (roomId) => {
+  const roomRef = doc(db, "rooms", roomId);
+  const roomSnap = await getDoc(roomRef);
+  return roomSnap.exists() ? { id: roomSnap.id, ...roomSnap.data() } : null;
+};

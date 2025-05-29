@@ -15,9 +15,11 @@
     "@tailwindcss/vite": "^4.1.7",
     "agora-rtc-sdk-ng": "^4.23.3",
     "firebase": "^11.8.1",
+    "lucide-react": "^0.511.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
     "react-loader-spinner": "^6.1.6",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.1",
@@ -33,6 +35,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "react-feather": "^2.0.10",
     "vite": "^6.3.5"
   }
 }
