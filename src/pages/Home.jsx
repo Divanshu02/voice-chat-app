@@ -7,7 +7,7 @@ import { logoutSuccess } from "../redux/slices/auth/authSlice";
 import { Dialog, DialogTitle, DialogPanel } from "@headlessui/react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { MagnifyingGlass } from "react-loader-spinner";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const Home = () => {
   const [rooms, setRooms] = useState([]);
@@ -151,16 +151,7 @@ const Home = () => {
         </h2>
         {loading ? (
           <div className="flex justify-center items-center h-48">
-            <MagnifyingGlass
-              visible={true}
-              height="80"
-              width="80"
-              ariaLabel="magnifying-glass-loading"
-              wrapperStyle={{}}
-              wrapperClass="magnifying-glass-wrapper"
-              glassColor="#c0efff"
-              color="#e15b64"
-            />
+            <ClipLoader color="#36d7b7" loading={loading} size={50} />
           </div>
         ) : rooms.length === 0 ? (
           <p className="text-gray-500 italic">

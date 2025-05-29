@@ -6,7 +6,7 @@ import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { onSnapshot } from "firebase/firestore";
 import { Dialog, DialogTitle, DialogPanel } from "@headlessui/react";
-import { MagnifyingGlass } from "react-loader-spinner";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const appId = import.meta.env.VITE_AGORA_APP_ID;
 
@@ -31,7 +31,7 @@ const Room = () => {
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [participants, setParticipants] = useState({});
   const [loading, setLoading] = useState(true);
-  console.log("participants==", participants, remoteUsers,userJoiner);
+  console.log("participants==", participants, remoteUsers, userJoiner);
   const fetchParticipants = async () => {
     const snapshot = await getDocs(
       collection(db, `rooms/${roomId}/participants`)
@@ -108,7 +108,7 @@ const Room = () => {
               );
             }
           });
-          fetchParticipants()
+          fetchParticipants();
         } catch (err) {
           console.warn("Error subscribing on user-published:", err);
         }
@@ -139,7 +139,7 @@ const Room = () => {
             }
             return prev;
           });
-          fetchParticipants()
+          fetchParticipants();
         } catch (err) {
           console.warn("Error subscribing on user-joined:", err);
         }
@@ -333,16 +333,7 @@ const Room = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {/* Local User */}
           {loading ? (
-            <MagnifyingGlass
-              visible={true}
-              height="80"
-              width="80"
-              ariaLabel="magnifying-glass-loading"
-              wrapperStyle={{}}
-              wrapperClass="magnifying-glass-wrapper"
-              glassColor="#c0efff"
-              color="#e15b64"
-            />
+            <ClipLoader color="#36d7b7" loading={loading} size={50} />
           ) : (
             localUid && (
               <div
